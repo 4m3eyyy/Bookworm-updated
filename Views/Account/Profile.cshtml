@@ -1,0 +1,437 @@
+@model Bookworm.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+
+    var genreIcons = new Dictionary<string, string>
+    {
+        ["Fantasy"] = "🧙", ["Science Fiction"] = "🚀", ["Mystery"] = "🔍",
+        ["Thriller"] = "⚡", ["Romance"] = "❤️", ["Horror"] = "👻",
+        ["Historical"] = "🏛️", ["Non-Fiction"] = "📰", ["Young Adult"] = "✨",
+        ["Classic"] = "📜", ["Adventure"] = "🗺️", ["Biography"] = "👤",
+        ["Self-Help"] = "🎯", ["Children's"] = "🎨", ["General Fiction"] = "📖"
+    };
+}
+
+<style>
+/* ─── Page Layout ─────────────────────────── */
+.profile-wrap       { max-width: 900px; margin: 2.5rem auto; padding: 0 4% 4rem; }
+.profile-hero       { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2.5rem;
+                      background: var(--bg-card); border: 1px solid var(--border);
+                      border-radius: var(--radius-lg); padding: 2rem; }
+.profile-avatar     { width: 72px; height: 72px; border-radius: 50%;
+                      background: var(--gradient); display: flex; align-items: center;
+                      justify-content: center; font-size: 2rem; flex-shrink: 0; }
+.profile-name       { font-size: 1.6rem; font-weight: 800; }
+.profile-meta       { color: var(--text-muted); font-size: 0.88rem; margin-top: 0.25rem; }
+
+.success-banner     { background: rgba(0,200,160,0.12); border: 1px solid rgba(0,200,160,0.35);
+                      color: #00c8a0; border-radius: var(--radius-md);
+                      padding: 1rem 1.5rem; margin-bottom: 2rem; font-weight: 500; }
+
+.section-card       { background: var(--bg-card); border: 1px solid var(--border);
+                      border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 1.5rem; }
+.section-card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;
+                      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.section-card-sub   { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+/* ─── Genre toggles ───────────────────────── */
+.genre-toggle-grid  { display: flex; flex-wrap: wrap; gap: 0.65rem; }
+.gtoggle            { padding: 0.55rem 1.2rem; border-radius: 50px;
+                      background: var(--bg-glass); border: 1.5px solid var(--border);
+                      color: var(--text-secondary); font-size: 0.88rem; font-weight: 500;
+                      cursor: pointer; transition: all 0.2s; font-family: 'Outfit', sans-serif; }
+.gtoggle:hover      { border-color: var(--accent); color: var(--accent); }
+.gtoggle.on         { background: rgba(79,142,247,0.15); border-color: var(--accent); color: var(--accent); }
+
+/* ─── Selected books list ─────────────────── */
+.sel-books-list     { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;
+                      min-height: 48px; }
+.sel-book-pill      { display: flex; align-items: center; gap: 0.5rem;
+                      background: var(--bg-glass); border: 1px solid var(--border);
+                      border-radius: var(--radius-sm); padding: 0.4rem 0.5rem 0.4rem 0.75rem;
+                      font-size: 0.82rem; color: var(--text-primary); }
+.sel-book-pill img  { width: 28px; height: 40px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
+.sel-book-pill-info { max-width: 140px; }
+.sel-book-title-sm  { font-size: 0.75rem; font-weight: 600;
+                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sel-book-auth-sm   { font-size: 0.68rem; color: var(--text-muted);
+                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pill-remove        { width: 20px; height: 20px; border-radius: 50%; border: none;
+                      background: rgba(248,113,113,0.15); color: #f87171;
+                      font-size: 0.75rem; cursor: pointer; display: flex;
+                      align-items: center; justify-content: center;
+                      flex-shrink: 0; transition: background 0.2s; }
+.pill-remove:hover  { background: rgba(248,113,113,0.3); }
+
+.empty-sel-hint     { color: var(--text-muted); font-size: 0.88rem; font-style: italic;
+                      padding: 0.5rem 0; }
+
+/* ─── "Add more" button ───────────────────── */
+.btn-add-more       { display: inline-flex; align-items: center; gap: 0.5rem;
+                      padding: 0.6rem 1.4rem; border-radius: 50px;
+                      border: 1.5px solid var(--accent); color: var(--accent);
+                      font-family: 'Outfit', sans-serif; font-weight: 600;
+                      font-size: 0.88rem; background: rgba(79,142,247,0.07);
+                      cursor: pointer; transition: all 0.2s; }
+.btn-add-more:hover { background: rgba(79,142,247,0.15); }
+
+/* ─── Modal ───────────────────────────────── */
+.modal-backdrop     { position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+                      z-index: 500; display: flex; align-items: flex-end;
+                      justify-content: center; opacity: 0; pointer-events: none;
+                      transition: opacity 0.25s; }
+.modal-backdrop.open{ opacity: 1; pointer-events: all; }
+
+.modal-sheet        { background: var(--bg-surface); border: 1px solid var(--border);
+                      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+                      width: 100%; max-width: 960px; max-height: 90vh;
+                      display: flex; flex-direction: column;
+                      transform: translateY(30px); transition: transform 0.3s ease;
+                      overflow: hidden; }
+.modal-backdrop.open .modal-sheet { transform: translateY(0); }
+
+.modal-header       { padding: 1.5rem 2rem 1rem; border-bottom: 1px solid var(--border);
+                      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.modal-title        { font-size: 1.1rem; font-weight: 700; flex: 1; }
+.modal-close        { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
+                      background: var(--bg-glass); color: var(--text-secondary);
+                      font-size: 1.1rem; cursor: pointer; display: flex;
+                      align-items: center; justify-content: center; transition: all 0.2s; }
+.modal-close:hover  { border-color: #f87171; color: #f87171; }
+
+.modal-search-wrap  { position: relative; flex: 1; min-width: 200px; }
+.modal-search       { width: 100%; padding: 0.55rem 1rem 0.55rem 2.4rem;
+                      background: var(--bg-glass); border: 1px solid var(--border);
+                      border-radius: 50px; color: var(--text-primary);
+                      font-family: 'Outfit', sans-serif; font-size: 0.9rem;
+                      transition: border-color 0.25s; }
+.modal-search:focus { outline: none; border-color: var(--accent); }
+.modal-search::placeholder { color: var(--text-muted); }
+.modal-search-icon  { position: absolute; left: 0.75rem; top: 50%;
+                      transform: translateY(-50%); font-size: 0.85rem; color: var(--text-muted); }
+
+.modal-body         { overflow-y: auto; padding: 1.5rem 2rem 2rem; flex: 1; }
+.modal-grid         { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap: 0.75rem; }
+
+/* Modal book card */
+.mbook              { position: relative; border-radius: var(--radius-sm); overflow: hidden;
+                      border: 2px solid var(--border); cursor: pointer; transition: border-color 0.2s, transform 0.2s; }
+.mbook:hover        { border-color: rgba(79,142,247,0.5); transform: translateY(-2px); }
+.mbook.mpicked      { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(79,142,247,0.3); }
+.mbook img          { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; }
+.mbook .mcheck      { position: absolute; top: 5px; right: 5px; width: 22px; height: 22px;
+                      border-radius: 50%; background: var(--accent); display: none;
+                      align-items: center; justify-content: center;
+                      font-size: 0.7rem; color: white; font-weight: 800; z-index: 2; }
+.mbook.mpicked .mcheck { display: flex; }
+.mbook .mtitle      { font-size: 0.65rem; color: var(--text-muted); padding: 0.35rem 0.4rem;
+                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                      background: var(--bg-surface); }
+
+.modal-footer       { padding: 1rem 2rem; border-top: 1px solid var(--border);
+                      display: flex; align-items: center; justify-content: space-between; }
+.modal-count-text   { font-size: 0.88rem; color: var(--text-muted); }
+.modal-count-text span { color: var(--accent); font-weight: 700; }
+
+/* ─── Save button ─────────────────────────── */
+.btn-save           { display: inline-flex; align-items: center; gap: 0.5rem;
+                      padding: 0.8rem 2.5rem; border-radius: 50px; background: var(--gradient);
+                      color: white; font-family: 'Outfit', sans-serif; font-weight: 700;
+                      font-size: 1rem; border: none; cursor: pointer;
+                      transition: transform 0.2s, box-shadow 0.2s; }
+.btn-save:hover     { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(79,142,247,0.35); }
+
+.count-badge        { display: inline-flex; align-items: center; gap: 0.3rem;
+                      padding: 0.2rem 0.65rem; border-radius: 50px;
+                      background: rgba(79,142,247,0.15); color: var(--accent);
+                      font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem; }
+
+[data-hidden="true"] { display: none !important; }
+</style>
+
+<div class="profile-wrap">
+
+    @* ── PROFILE HERO ── *@
+    <div class="profile-hero">
+        <div class="profile-avatar">📚</div>
+        <div>
+            <div class="profile-name">@Model.User.Username</div>
+            <div class="profile-meta">
+                @Model.SelectedGenres.Count genre@(Model.SelectedGenres.Count != 1 ? "s" : "") selected
+                &nbsp;·&nbsp;
+                @Model.LikedBooks.Count book@(Model.LikedBooks.Count != 1 ? "s" : "") liked
+            </div>
+        </div>
+        <a asp-controller="Home" asp-action="Index"
+           style="margin-left:auto; color:var(--text-muted); font-size:0.88rem; display:flex; align-items:center; gap:0.4rem;">
+            ← Back to Home
+        </a>
+    </div>
+
+    @* ── SUCCESS BANNER ── *@
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="success-banner">@Model.SuccessMessage</div>
+    }
+
+    <form method="post" asp-action="SaveProfile" id="profileForm">
+        <div id="genre-hidden-inputs"></div>
+        <div id="books-hidden-inputs"></div>
+
+        @* ── GENRE PREFERENCES ── *@
+        <div class="section-card">
+            <div class="section-card-title">
+                🎭 Genre Preferences
+                <span class="count-badge" id="genreCount">@Model.SelectedGenres.Count selected</span>
+            </div>
+            <div class="section-card-sub">These genres feed directly into your ML recommendations — they boost scores for books in your preferred categories.</div>
+            <div class="genre-toggle-grid" id="genreGrid">
+                @foreach (var genre in Model.AllGenres)
+                {
+                    <button type="button"
+                            class="gtoggle @(Model.SelectedGenres.Contains(genre) ? "on" : "")"
+                            data-genre="@genre"
+                            onclick="toggleGenre(this)">
+                        @(genreIcons.GetValueOrDefault(genre, "📚")) @genre
+                    </button>
+                }
+            </div>
+        </div>
+
+        @* ── LIKED BOOKS ── *@
+        <div class="section-card">
+            <div class="section-card-title">
+                📖 Books You've Enjoyed
+                <span class="count-badge" id="bookCount">@Model.LikedBooks.Count selected</span>
+            </div>
+            <div class="section-card-sub">The ML model uses these to understand your taste. Add or remove books any time.</div>
+
+            {{!-- Selected books shown as pills --}}
+            <div class="sel-books-list" id="selBooksList">
+                @if (!Model.LikedBooks.Any())
+                {
+                    <p class="empty-sel-hint" id="emptyHint">No books selected yet — click "Add Books" below to get started.</p>
+                }
+            </div>
+
+            <button type="button" class="btn-add-more" onclick="openModal()">
+                ＋ Add Books
+            </button>
+        </div>
+
+        @* ── SAVE BUTTON ── *@
+        <div style="text-align:center; margin-top:1rem;">
+            <button type="submit" class="btn-save">💾 Save Preferences</button>
+        </div>
+    </form>
+</div>
+
+@* ══════════════════════════════════
+   BOOK PICKER MODAL
+   ══════════════════════════════════ *@
+<div class="modal-backdrop" id="modalBackdrop" onclick="handleBackdropClick(event)">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <div class="modal-title">📚 Pick Books You've Enjoyed</div>
+            <div class="modal-search-wrap">
+                <span class="modal-search-icon">🔍</span>
+                <input type="text" class="modal-search" id="modalSearch"
+                       placeholder="Search by title or author…"
+                       oninput="filterModal(this.value)" autocomplete="off" />
+            </div>
+            <button type="button" class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-grid" id="modalGrid">
+                @foreach (var book in Model.PopularBooks)
+                {
+                    <div class="mbook"
+                         id="mbook-@book.BookId"
+                         data-id="@book.BookId"
+                         data-title="@book.Title.ToLower()"
+                         data-author="@book.Authors.ToLower()"
+                         data-cover="@book.ImageUrl"
+                         data-booktitle="@book.Title"
+                         data-bookauthor="@book.Authors"
+                         onclick="toggleModalBook(this, @book.BookId, '@book.ImageUrl.Replace("'","\\'")', '@book.Title.Replace("'","\\'").Replace("\"", "&quot;")', '@book.Authors.Replace("'","\\'").Replace("\"","&quot;")')">
+                        <div class="mcheck">✓</div>
+                        <img src="@book.ImageUrl" alt="@book.Title"
+                             onerror="this.src='https://via.placeholder.com/110x165/1a2a3a/4f8ef7?text=📖'" loading="lazy" />
+                        <div class="mtitle">@book.Title</div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="modal-footer">
+            <span class="modal-count-text"><span id="modalCountNum">0</span> books selected</span>
+            <button type="button" class="btn-save" style="padding:0.65rem 1.75rem;font-size:0.9rem;" onclick="closeModal()">
+                Done ✓
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+/* ───────────────────────────────────────────
+   STATE
+─────────────────────────────────────────── */
+// Pre-populate from server
+const selectedBooks = new Map(); // id -> { id, cover, title, author }
+
+@foreach (var book in Model.LikedBooks)
+{
+    <text>
+    selectedBooks.set(@book.BookId, {
+        id:     @book.BookId,
+        cover:  '@book.ImageUrl.Replace("'", "\\'")' ,
+        title:  '@book.Title.Replace("'", "\\'").Replace("\"","&quot;")',
+        author: '@book.Authors.Replace("'", "\\'").Replace("\"","&quot;")'
+    });
+    </text>
+}
+
+const selectedGenres = new Set(@Html.Raw("[" + string.Join(",", Model.SelectedGenres.Select(g => $"\"{g}\"")) + "]"));
+
+/* ───────────────────────────────────────────
+   DOM REFS
+─────────────────────────────────────────── */
+const genreHidden   = document.getElementById('genre-hidden-inputs');
+const booksHidden   = document.getElementById('books-hidden-inputs');
+const genreCountEl  = document.getElementById('genreCount');
+const bookCountEl   = document.getElementById('bookCount');
+const selList       = document.getElementById('selBooksList');
+const emptyHint     = document.getElementById('emptyHint');
+const modalCountNum = document.getElementById('modalCountNum');
+
+/* ───────────────────────────────────────────
+   GENRE LOGIC
+─────────────────────────────────────────── */
+function syncGenreInputs() {
+    genreHidden.innerHTML = '';
+    selectedGenres.forEach(g => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'genres'; inp.value = g;
+        genreHidden.appendChild(inp);
+    });
+    genreCountEl.textContent = selectedGenres.size + ' selected';
+}
+function toggleGenre(btn) {
+    const g = btn.dataset.genre;
+    if (selectedGenres.has(g)) { selectedGenres.delete(g); btn.classList.remove('on'); }
+    else                        { selectedGenres.add(g);    btn.classList.add('on'); }
+    syncGenreInputs();
+}
+syncGenreInputs();
+
+/* ───────────────────────────────────────────
+   BOOK LOGIC
+─────────────────────────────────────────── */
+function syncBookInputs() {
+    booksHidden.innerHTML = '';
+    selectedBooks.forEach((b, id) => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'likedBookIds'; inp.value = id;
+        booksHidden.appendChild(inp);
+    });
+    bookCountEl.textContent  = selectedBooks.size + ' selected';
+    modalCountNum.textContent = selectedBooks.size;
+}
+
+function renderSelList() {
+    // Clear existing pills (keep emptyHint element)
+    Array.from(selList.children).forEach(c => { if (c.id !== 'emptyHint') c.remove(); });
+
+    if (selectedBooks.size === 0) {
+        if (!emptyHint) {
+            const hint = document.createElement('p');
+            hint.className = 'empty-sel-hint'; hint.id = 'emptyHint';
+            hint.textContent = 'No books selected yet — click "Add Books" below to get started.';
+            selList.appendChild(hint);
+        }
+    } else {
+        const hint = document.getElementById('emptyHint');
+        if (hint) hint.remove();
+
+        selectedBooks.forEach((b, id) => {
+            const pill = document.createElement('div');
+            pill.className = 'sel-book-pill';
+            pill.id = 'pill-' + id;
+            pill.innerHTML = `
+                <img src="${b.cover}" alt="${b.title}"
+                     onerror="this.src='https://via.placeholder.com/28x40/1a2a3a/4f8ef7?text=📖'" />
+                <div class="sel-book-pill-info">
+                    <div class="sel-book-title-sm" title="${b.title}">${b.title}</div>
+                    <div class="sel-book-auth-sm">${b.author}</div>
+                </div>
+                <button type="button" class="pill-remove" title="Remove" onclick="removeBook(${id})">✕</button>
+            `;
+            selList.appendChild(pill);
+        });
+    }
+    syncBookInputs();
+}
+
+function removeBook(id) {
+    selectedBooks.delete(id);
+    const pill = document.getElementById('pill-' + id);
+    if (pill) pill.remove();
+    // Unmark in modal if open
+    const mcard = document.getElementById('mbook-' + id);
+    if (mcard) mcard.classList.remove('mpicked');
+    renderSelList();
+}
+
+function toggleModalBook(card, id, cover, title, author) {
+    if (selectedBooks.has(id)) {
+        selectedBooks.delete(id);
+        card.classList.remove('mpicked');
+    } else {
+        selectedBooks.set(id, { id, cover, title, author });
+        card.classList.add('mpicked');
+    }
+    renderSelList();
+}
+
+/* ───────────────────────────────────────────
+   MODAL
+─────────────────────────────────────────── */
+const backdrop = document.getElementById('modalBackdrop');
+
+function openModal() {
+    // Mark currently selected books in modal
+    selectedBooks.forEach((_, id) => {
+        const mcard = document.getElementById('mbook-' + id);
+        if (mcard) mcard.classList.add('mpicked');
+    });
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('modalSearch').value = '';
+    filterModal('');
+}
+
+function closeModal() {
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function handleBackdropClick(e) {
+    if (e.target === backdrop) closeModal();
+}
+
+function filterModal(query) {
+    const q = query.trim().toLowerCase();
+    let visible = 0;
+    document.querySelectorAll('#modalGrid .mbook').forEach(card => {
+        const match = !q || card.dataset.title.includes(q) || card.dataset.author.includes(q);
+        card.setAttribute('data-hidden', match ? 'false' : 'true');
+        if (match) visible++;
+    });
+}
+
+/* ───────────────────────────────────────────
+   INIT — render already-liked books as pills
+─────────────────────────────────────────── */
+renderSelList();
+</script>
+}

@@ -1,0 +1,202 @@
+@model Bookworm.ViewModels.ReadingDashboardViewModel
+
+@{
+    ViewData["Title"] = "My Reading Dashboard";
+}
+
+<div class="reading-dashboard">
+
+    <div class="dashboard-header">
+        <h1>📚 My Reading Dashboard</h1>
+        <p>Track your reading journey and activity.</p>
+    </div>
+
+    <div class="reading-stats">
+
+        <div class="reading-stat-card">
+            <span class="stat-icon">📖</span>
+            <div>
+                <h3>@Model.CurrentlyReading</h3>
+                <p>Currently Reading</p>
+            </div>
+        </div>
+
+        <div class="reading-stat-card">
+            <span class="stat-icon">✅</span>
+            <div>
+                <h3>@Model.CompletedBooks</h3>
+                <p>Completed</p>
+            </div>
+        </div>
+
+        <div class="reading-stat-card">
+            <span class="stat-icon">💬</span>
+            <div>
+                <h3>@Model.ReviewsWritten</h3>
+                <p>Reviews Written</p>
+            </div>
+        </div>
+
+    </div>
+    <section class="reading-section reading-summary">
+
+        <h2>📈 Reading Summary</h2>
+
+        <div class="reading-summary-grid">
+
+            <div class="summary-card">
+                <strong>@Model.LikedBooksCount</strong>
+                <span>Books Liked</span>
+            </div>
+
+            <div class="summary-card">
+                <strong>@Model.AverageProgress.ToString("0")%</strong>
+                <span>Average Progress</span>
+            </div>
+
+        </div>
+
+    </section>
+    <section class="reading-section">
+
+        <h2>📖 Currently Reading</h2>
+
+        @if (!Model.CurrentlyReadingBooks.Any())
+        {
+            <p class="empty-reading">You are not currently reading any books.</p>
+        }
+        else
+        {
+            <div class="reading-book-grid">
+
+                @foreach (var book in Model.CurrentlyReadingBooks)
+                {
+                    <div class="reading-book-card">
+
+                        <img src="@book.ImageUrl" alt="@book.Title" />
+
+                        <div class="reading-book-info">
+                            <h3>@book.Title</h3>
+                            <p>@book.Authors</p>
+
+                            <a asp-controller="Books" asp-action="Details" asp-route-id="@book.BookId" class="continue-reading">
+                                Continue Reading
+                            </a>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </section>
+
+    <section class="reading-section">
+
+        <h2>✅ Completed Books</h2>
+
+        @if (!Model.CompletedBooksList.Any())
+        {
+            <p class="empty-reading">No completed books yet.</p>
+        }
+        else
+        {
+            <div class="reading-book-grid">
+
+                @foreach (var book in Model.CompletedBooksList)
+                {
+                    <div class="reading-book-card">
+
+                        <img src="@book.ImageUrl" alt="@book.Title" />
+
+                        <div class="reading-book-info">
+                            <h3>@book.Title</h3>
+                            <p>@book.Authors</p>
+
+                            <a asp-controller="Books" asp-action="Details" asp-route-id="@book.BookId" class="view-book">
+                                View Book
+                            </a>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </section>
+    <section class="reading-section">
+
+        <h2>💬 My Reviews</h2>
+
+        @if (!Model.MyReviews.Any())
+        {
+            <p class="empty-reading">You haven't written any reviews yet.</p>
+        }
+        else
+        {
+            <div class="my-reviews">
+
+                @foreach (var review in Model.MyReviews)
+                {
+                    <div class="review-card">
+
+                        <p class="review-text">
+                            "@review.ReviewText"
+                        </p>
+
+                        <div class="review-footer">
+                            <span>
+                                @review.CreatedAt.ToString("dd MMM yyyy")
+                            </span>
+
+                            <a asp-controller="Books" asp-action="Details" asp-route-id="@review.BookId" class="view-book">
+                                View Book
+                            </a>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </section>
+
+    <section class="reading-section">
+
+        <h2>❤️ My Liked Books</h2>
+
+        @if (!Model.LikedBooks.Any())
+        {
+            <p class="empty-reading">You haven't liked any books yet.</p>
+        }
+        else
+        {
+            <div class="reading-book-grid">
+
+                @foreach (var book in Model.LikedBooks)
+                {
+                    <div class="reading-book-card">
+
+                        <img src="@book.ImageUrl" alt="@book.Title" />
+
+                        <div class="reading-book-info">
+                            <h3>@book.Title</h3>
+                            <p>@book.Authors</p>
+
+                            <a asp-controller="Books" asp-action="Details" asp-route-id="@book.BookId" class="view-book">
+                                View Book
+                            </a>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </section>
+
+</div>

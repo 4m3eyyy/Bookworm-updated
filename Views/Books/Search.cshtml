@@ -1,0 +1,42 @@
+@model Bookworm.ViewModels.SearchViewModel
+@{
+    ViewData["Title"] = $"Search: {Model.Query}";
+    ViewBag.Query = Model.Query;
+}
+
+<div class="search-header">
+    <h1>
+        Search results for <span class="query">"@Model.Query"</span>
+    </h1>
+    <p class="count">@Model.TotalResults result@(Model.TotalResults != 1 ? "s" : "") found</p>
+</div>
+
+<div class="browse-grid">
+    @if (!Model.Results.Any())
+    {
+        <div style="text-align: center; padding: 4rem; color: var(--text-muted);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+            <h2 style="margin-bottom: 0.5rem;">No books found</h2>
+            <p>Try a different title, author, or keyword.</p>
+        </div>
+    }
+    else
+    {
+        <div class="books-grid">
+            @foreach (var book in Model.Results)
+            {
+                <a href="@Url.Action("Details", "Books", new { id = book.BookId })" class="book-card">
+                    <div class="book-cover-wrap">
+                        <img src="@book.ImageUrl" alt="@book.Title" class="book-cover"
+                             onerror="this.src='https://via.placeholder.com/170x255/1a2a3a/4f8ef7?text=📖'" loading="lazy" />
+                        <div class="book-card-overlay"><span class="rating">★ @book.AverageRating</span></div>
+                    </div>
+                    <div class="book-info">
+                        <div class="book-title">@book.Title</div>
+                        <div class="book-author">@book.Authors</div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>

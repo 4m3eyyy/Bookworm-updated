@@ -1,0 +1,113 @@
+@model Bookworm.ViewModels.BrowseViewModel
+@{
+    ViewData["Title"] = string.IsNullOrEmpty(Model.Genre) ? "Browse All Books" : $"Browse {Model.Genre}";
+    var genreIcons = new Dictionary<string, string>
+    {
+        ["Fantasy"] = "🧙", ["Science Fiction"] = "🚀", ["Mystery"] = "🔍",
+        ["Thriller"] = "⚡", ["Romance"] = "❤️", ["Horror"] = "👻",
+        ["Historical"] = "🏛️", ["Non-Fiction"] = "📰", ["Young Adult"] = "✨",
+        ["Classic"] = "📜", ["Adventure"] = "🗺️", ["Biography"] = "👤",
+        ["Self-Help"] = "🎯", ["Children's"] = "🎨", ["General Fiction"] = "📖"
+    };
+}
+
+<div class="browse-header">
+    <h1 class="browse-title">
+        @(string.IsNullOrEmpty(Model.Genre)
+            ? "📚 All Books"
+            : $"{genreIcons.GetValueOrDefault(Model.Genre, "📚")} {Model.Genre}")
+    </h1>
+    <div class="browse-controls">
+        <form method="get" asp-action="Browse">
+            <input type="hidden" name="genre" value="@Model.Genre" />
+            <select name="sortBy" class="select-control" onchange="this.form.submit()">
+                <option value="trending"  selected="@(Model.SortBy == "trending")">🔥 Trending</option>
+                <option value="rating"    selected="@(Model.SortBy == "rating")">⭐ Top Rated</option>
+                <option value="popular"   selected="@(Model.SortBy == "popular")">💬 Most Reviews</option>
+                <option value="newest"    selected="@(Model.SortBy == "newest")">🌟 Newest</option>
+            </select>
+        </form>
+    </div>
+</div>
+
+<div class="genre-sidebar">
+    <a href="@Url.Action("Browse", new { genre = "", sortBy = Model.SortBy })"
+       class="genre-pill @(string.IsNullOrEmpty(Model.Genre) ? "active" : "")">All</a>
+    @foreach (var g in Model.AllGenres)
+    {
+        <a href="@Url.Action("Browse", new { genre = g, sortBy = Model.SortBy })"
+           class="genre-pill @(Model.Genre == g ? "active" : "")">
+            @(genreIcons.GetValueOrDefault(g, "📚")) @g
+        </a>
+    }
+</div>
+
+<div class="browse-grid">
+    <p class="browse-count">Showing @Model.Books.Count() of @Model.TotalBooks books</p>
+    <div class="books-grid">
+        @foreach (var book in Model.Books)
+        {
+            <a href="@Url.Action("Details", "Books", new { id = book.BookId })" class="book-card">
+                <div class="book-cover-wrap">
+                    <img src="@book.ImageUrl" alt="@book.Title" class="book-cover"
+                         onerror="this.src='https://via.placeholder.com/170x255/1a2a3a/4f8ef7?text=📖'" loading="lazy" />
+                    <div class="book-card-overlay"><span class="rating">★ @book.AverageRating</span></div>
+                </div>
+                <div class="book-info">
+                    <div class="book-title">@book.Title</div>
+                    <div class="book-author">@book.Authors</div>
+                </div>
+            </a>
+        }
+    </div>
+</div>
+
+@* ── PAGINATION ── *@
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination">
+        @if (Model.CurrentPage > 1)
+        {
+            <a href="@Url.Action("Browse", new { genre = Model.Genre, page = Model.CurrentPage - 1, sortBy = Model.SortBy })"
+               class="page-btn">‹ Prev</a>
+        }
+        else
+        {
+            <span class="page-btn disabled">‹ Prev</span>
+        }
+
+        @{
+            int start = Math.Max(1, Model.CurrentPage - 2);
+            int end   = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+        }
+
+        @if (start > 1)
+        {
+            <a href="@Url.Action("Browse", new { genre = Model.Genre, page = 1, sortBy = Model.SortBy })" class="page-btn">1</a>
+            if (start > 2) { <span class="page-btn disabled">…</span> }
+        }
+
+        @for (int p = start; p <= end; p++)
+        {
+            <a href="@Url.Action("Browse", new { genre = Model.Genre, page = p, sortBy = Model.SortBy })"
+               class="page-btn @(p == Model.CurrentPage ? "active" : "")">@p</a>
+        }
+
+        @if (end < Model.TotalPages)
+        {
+            if (end < Model.TotalPages - 1) { <span class="page-btn disabled">…</span> }
+            <a href="@Url.Action("Browse", new { genre = Model.Genre, page = Model.TotalPages, sortBy = Model.SortBy })"
+               class="page-btn">@Model.TotalPages</a>
+        }
+
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a href="@Url.Action("Browse", new { genre = Model.Genre, page = Model.CurrentPage + 1, sortBy = Model.SortBy })"
+               class="page-btn">Next ›</a>
+        }
+        else
+        {
+            <span class="page-btn disabled">Next ›</span>
+        }
+    </div>
+}

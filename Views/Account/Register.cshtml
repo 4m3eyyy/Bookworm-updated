@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "Join Bookworm";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Join Bookworm</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<div class="onboarding-wrap">
+    <div class="onboarding-card" style="max-width: 440px;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📚</div>
+        <h1>Welcome to Bookworm</h1>
+        <p>Your personal AI-powered book recommendation engine. Create your account to get started.</p>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="error-msg">⚠️ @ViewBag.Error</div>
+        }
+
+        <form method="post" action="/Account/Register" style="text-align: left;">
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-input" placeholder="e.g. bookworm42" required autocomplete="off" />
+            </div>
+            <div class="form-group" style="margin-bottom: 1.75rem;">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-input" placeholder="••••••••" required />
+            </div>
+            <button type="submit" class="btn-primary">Create Account →</button>
+            <div style="margin-top: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                Already have an account? <a href="/Account/Login" style="color: var(--accent); font-weight: 500;">Log In</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

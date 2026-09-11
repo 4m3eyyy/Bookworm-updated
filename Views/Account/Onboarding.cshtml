@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "What do you love to read?";
+    var genres = new[]
+    {
+        ("Fantasy", "🧙"), ("Science Fiction", "🚀"), ("Mystery", "🔍"),
+        ("Thriller", "⚡"), ("Romance", "❤️"), ("Horror", "👻"),
+        ("Historical", "🏛️"), ("Non-Fiction", "📰"), ("Young Adult", "✨"),
+        ("Classic", "📜"), ("Adventure", "🗺️"), ("Biography", "👤"),
+        ("Self-Help", "🎯"), ("Children's", "🎨"), ("General Fiction", "📖")
+    };
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>What do you love to read?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<div class="onboarding-wrap">
+    <div class="onboarding-card">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">💬</div>
+        <h1>What do you love to read?</h1>
+        <p>Select genres you enjoy — we'll use this to personalise your experience.</p>
+
+        <form method="post" action="/Account/Onboarding">
+            <div class="genre-toggle-grid">
+                @foreach (var (genre, icon) in genres)
+                {
+                    <button type="button" class="genre-toggle" data-genre="@genre">@icon @genre</button>
+                }
+            </div>
+            <div id="genre-inputs"></div>
+            <button type="submit" class="btn-primary">Continue →</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const toggles = document.querySelectorAll('.genre-toggle');
+    const container = document.getElementById('genre-inputs');
+    const selected = new Set();
+
+    toggles.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const genre = btn.dataset.genre;
+            btn.classList.toggle('selected');
+            if (selected.has(genre)) {
+                selected.delete(genre);
+            } else {
+                selected.add(genre);
+            }
+            container.innerHTML = '';
+            selected.forEach(g => {
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'genres';
+                inp.value = g;
+                container.appendChild(inp);
+            });
+        });
+    });
+</script>
+</body>
+</html>

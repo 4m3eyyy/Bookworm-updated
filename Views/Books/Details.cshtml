@@ -1,0 +1,330 @@
+@model Bookworm.ViewModels.BookDetailsViewModel
+@{
+    ViewData["Title"] = Model.Book?.Title;
+    var book = Model.Book!;
+
+    // Build star rating (out of 5)
+    int fullStars = (int)Math.Floor(book.AverageRating);
+    bool halfStar = (book.AverageRating - fullStars) >= 0.25f;
+}
+
+@* ── BLURRED HERO BACKGROUND ── *@
+<div class="details-hero">
+    <img src="@book.ImageUrl" alt="@book.Title" class="details-hero-bg"
+         onerror="this.src='https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80'" />
+    <div class="details-hero-overlay"></div>
+    <div class="details-hero-content">
+        <img src="@book.ImageUrl" alt="@book.Title" class="details-cover"
+             onerror="this.src='https://via.placeholder.com/180x270/1a2a3a/4f8ef7?text=📖'" />
+        <div class="details-meta">
+            <h1>@book.Title</h1>
+            <p class="by">by <span>@book.Authors</span></p>
+
+            <div class="details-tags">
+                <span class="tag genre-tag">@book.Genre</span>
+                @if (book.PublicationYear.HasValue)
+                {
+                    <span class="tag">@((int)book.PublicationYear)</span>
+                }
+                @if (!string.IsNullOrEmpty(book.LanguageCode))
+                {
+                    <span class="tag">@book.LanguageCode.ToUpper()</span>
+                }
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <div class="star-rating">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= fullStars)
+                        {
+                            <span class="star filled">★</span>
+                        }
+                        else if (i == fullStars + 1 && halfStar)
+                        {
+                            <span class="star half">★</span>
+                        }
+                        else
+                        {
+                            <span class="star">★</span>
+                        }
+                    }
+                </div>
+                <span style="font-weight: 700; font-size: 1.1rem;">@book.AverageRating</span>
+                <span style="color: var(--text-muted); font-size: 0.88rem;">/ 5</span>
+            </div>
+
+            <form method="post" asp-action="ToggleLike" asp-route-id="@book.BookId"
+                  style="margin-top: 1.25rem; display: inline-block;">
+                @if (Model.IsLiked)
+                {
+                    <button type="submit" class="btn-primary"
+                            style="background: var(--bg-glass); border: 1px solid var(--accent); color: var(--accent); gap: 0.5rem; display: inline-flex; align-items: center; justify-content: center; width: 170px; padding: 0.6rem 1.5rem; font-size: 0.9rem;">
+                        <span>❤️</span> Liked
+                    </button>
+                }
+                else
+                {
+                    <button type="submit" class="btn-primary"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; gap: 0.5rem; display: inline-flex; align-items: center; justify-content: center; width: 170px; padding: 0.6rem 1.5rem; font-size: 0.9rem;"
+                            onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                            onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                        <span>🤍</span> Like this book
+                    </button>
+                }
+            </form>
+            @if (Model.ReadingProgress == null)
+            {
+                <form method="post" asp-action="StartReading" asp-route-id="@book.BookId">
+                    <button type="submit" class="reading-start-button">
+                         Start Reading
+                    </button>
+                </form>
+            }
+            else if (Model.ReadingProgress.Status == "Currently Reading")
+            {
+                <div class="reading-progress">
+
+                    <div class="reading-header">
+                        <strong>📖 Currently Reading</strong>
+                        <span id="progressValue">
+                            @Model.ReadingProgress.Progress%
+                        </span>
+                    </div>
+
+                    <form id="progressForm" method="post" asp-action="UpdateProgress">
+
+                        <input type="hidden" name="id" value="@book.BookId" />
+
+                        <input type="range" id="progressSlider" name="progress" min="0" max="100"
+                               value="@Model.ReadingProgress.Progress" class="form-range" />
+
+                    </form>
+
+                    <form method="post" asp-action="MarkCompleted" class="complete-form">
+
+                        <input type="hidden" name="id" value="@book.BookId" />
+
+                        <button type="submit" class="complete-button">
+                             Mark as Completed
+                        </button>
+
+                    </form>
+
+                </div>
+
+                <script>
+                                const slider = document.getElementById("progressSlider");
+                                const progressValue = document.getElementById("progressValue");
+                                const progressForm = document.getElementById("progressForm");
+
+                                slider.addEventListener("input", function () {
+                                    progressValue.textContent = this.value + "%";
+                                });
+
+                                slider.addEventListener("change", function () {
+                                    fetch(progressForm.action, {
+                                        method: "POST",
+                                        body: new FormData(progressForm)
+                                    });
+                                });
+                </script>
+            }
+            else
+            {
+                <div class="reading-progress">
+                    <div class="reading-header">
+                        <strong>✅ Completed   100%</strong>
+            
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@* ── STATS BAR ── *@
+<div class="details-stats">
+    <div class="stat-item">
+        <span class="stat-value">@book.AverageRating</span>
+        <span class="stat-label">Avg Rating</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+        <span class="stat-value">@book.RatingsCount.ToString("N0")</span>
+        <span class="stat-label">Total Ratings</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+        <span class="stat-value">@book.Ratings5.ToString("N0")</span>
+        <span class="stat-label">5-Star Ratings</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+        <span class="stat-value">@(book.PublicationYear.HasValue ? ((int)book.PublicationYear).ToString() : "—")</span>
+        <span class="stat-label">Published</span>
+    </div>
+</div>
+
+@* ── RATING BREAKDOWN ── *@
+<div style="padding: 0 4% 2rem; max-width: 480px;">
+    <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-secondary);">Rating Breakdown</h3>
+    @{
+        var ratingData = new[] {
+            (5, book.Ratings5), (4, book.Ratings4),
+            (3, book.Ratings3), (2, book.Ratings2), (1, book.Ratings1)
+        };
+        int totalRatings = Math.Max(book.RatingsCount, 1);
+    }
+    @foreach (var (stars, count) in ratingData)
+    {
+        var pct = (double)count / totalRatings * 100;
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+            <span style="font-size: 0.8rem; color: var(--text-muted); width: 40px;">@stars ★</span>
+            <div style="flex: 1; height: 6px; background: var(--bg-glass); border-radius: 3px; overflow: hidden;">
+                <div style="width: @pct.ToString("F1")%; height: 100%; background: var(--gradient); border-radius: 3px;">
+                </div>
+            </div>
+            <span
+            style="font-size: 0.78rem; color: var(--text-muted); width: 45px; text-align: right;">@count.ToString("N0")</span>
+        </div>
+    }
+</div>
+
+@* ── DESCRIPTION ── *@
+<div class="details-description">
+    <p>
+        <em>@book.Title</em> by @book.Authors is a celebrated work in the @book.Genre genre
+        with over @book.RatingsCount.ToString("N0") ratings and an exceptional average of
+        @book.AverageRating/5. This book has captivated readers worldwide with its compelling
+        narrative and memorable characters. Whether you are a longtime fan of @book.Genre
+        or exploring it for the first time, this is a must-read.
+    </p>
+</div>
+
+@* ── YOU MIGHT ALSO LIKE ── *@
+<div class="strip-wrapper" style="margin-top: 1rem;">
+    <div class="section-header">
+        <h2 class="section-title"><span class="icon">💡</span> You Might Also Like</h2>
+        <a href="@Url.Action("Browse", "Books", new { genre = book.Genre })" class="section-link">More @book.Genre →</a>
+    </div>
+    <button class="strip-btn left"
+            onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:-600,behavior:'smooth'})">‹</button>
+    <div class="strip">
+        @foreach (var simBook in Model.RecommendedSimilarBooks)
+        {
+            <a href="@Url.Action("Details", "Books", new { id = simBook.BookId })" class="book-card">
+                <div class="book-cover-wrap">
+                    <img src="@simBook.ImageUrl" alt="@simBook.Title" class="book-cover"
+                         onerror="this.src='https://via.placeholder.com/160x240/1a2a3a/4f8ef7?text=📖'" loading="lazy" />
+                    <div class="book-card-overlay"><span class="rating">★ @simBook.AverageRating</span></div>
+                </div>
+                <div class="book-info">
+                    <div class="book-title">@simBook.Title</div>
+                    <div class="book-author">@simBook.Authors</div>
+                </div>
+            </a>
+        }
+    </div>
+    <button class="strip-btn right"
+            onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:600,behavior:'smooth'})">›</button>
+</div>
+
+<div style="padding-bottom: 3rem;"></div>
+
+@* ── REVIEWS ── *@
+<div style="padding: 2rem 4%; max-width: 900px;">
+
+    <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem;">
+        💬 Reviews
+    </h2>
+
+    @* ── WRITE A REVIEW ── *@
+    <div style="
+        background: var(--bg-glass);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        ">
+
+        <h3 style="font-size: 1rem; margin-bottom: 1rem;">
+            Write a Review
+        </h3>
+
+        <form method="post" asp-action="AddReview" asp-route-bookId="@book.BookId">
+
+            <textarea name="reviewText" placeholder="Share your thoughts about this book..." required maxlength="1000"
+                      style="
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            resize: vertical;
+            font-family: inherit;
+            "></textarea>
+
+            <button type="submit" class="btn-primary" style="
+                margin-top: 1rem;
+                padding: 0.65rem 1.5rem;
+                ">
+                Submit Review
+            </button>
+
+        </form>
+
+    </div>
+
+
+    @* ── DISPLAY EXISTING REVIEWS ── *@
+    @if (Model.Reviews.Any())
+    {
+        foreach (var review in Model.Reviews)
+        {
+            <div style="
+                padding: 1.25rem 0;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                ">
+
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 0.5rem;
+                    ">
+
+                    <strong>
+                        @review.Username
+                    </strong>
+
+                    <span style="
+                        font-size: 0.8rem;
+                        color: var(--text-muted);
+                        ">
+                        @review.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")
+                    </span>
+
+                </div>
+
+                <p style="
+                    color: var(--text-secondary);
+                    line-height: 1.6;
+                    margin: 0;
+                    ">
+                    @review.ReviewText
+                </p>
+
+            </div>
+        }
+    }
+    else
+    {
+        <p style="color: var(--text-muted);">
+            No reviews yet. Be the first to review this book!
+        </p>
+    }
+
+</div>

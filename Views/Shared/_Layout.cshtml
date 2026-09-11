@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Bookworm</title>
+    <meta name="description" content="Bookworm — AI-powered book recommendations tailored just for you." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+
+<body>
+
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <nav class="navbar">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">📚 Bookworm</a>
+
+            <form class="navbar-search" asp-controller="Books" asp-action="Search" method="get">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="query" placeholder="Search books, authors…" value="@(ViewBag.Query ?? "")"
+                       autocomplete="off" />
+            </form>
+
+            <nav class="navbar-genres">
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="">All</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Fantasy">Fantasy</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Science Fiction">Sci-Fi</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Mystery">Mystery</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Thriller">Thriller</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Romance">Romance</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Horror">Horror</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Historical">Historical</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Young Adult">Young Adult</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Classic">Classics</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Non-Fiction">Non-Fiction</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Biography">Biography</a>
+                <a asp-controller="Books" asp-action="Browse" asp-route-genre="Self-Help">Self-Help</a>
+            </nav>
+
+            <div class="navbar-user">
+                <a asp-controller="Reading" asp-action="Dashboard" class="reading-nav">
+                     My Reading
+                </a>
+                <a asp-controller="Account" asp-action="Profile"
+                   style="font-size: 0.88rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.35rem; transition: color 0.2s;"
+                   onmouseover="this.style.color='var(--text-primary)'"
+                   onmouseout="this.style.color='var(--text-secondary)'">
+                    👤 @User.Identity.Name
+                </a>
+                <a asp-controller="Account" asp-action="Logout" class="btn-logout">Logout</a>
+            </div>
+        </nav>
+    }
+
+    @RenderBody()
+
+    <script>
+            // Horizontal strip scroll buttons
+            document.querySelectorAll('.strip-wrapper').forEach(wrapper => {
+                const strip = wrapper.querySelector('.strip');
+                const leftBtn = wrapper.querySelector('.strip-btn.left');
+                const rightBtn = wrapper.querySelector('.strip-btn.right');
+                if (leftBtn) leftBtn.addEventListener('click', () => strip.scrollBy({ left: -600, behavior: 'smooth' }));
+                if (rightBtn) rightBtn.addEventListener('click', () => strip.scrollBy({ left: 600, behavior: 'smooth' }));
+            });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

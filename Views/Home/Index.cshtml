@@ -1,0 +1,270 @@
+@model Bookworm.ViewModels.HomeViewModel
+@{
+    ViewData["Title"] = "Home";
+    var userName = User.Identity?.Name ?? "Reader";
+    var firstName = userName.Split(' ')[0];
+
+    var genreIcons = new Dictionary<string, string>
+    {
+        ["Fantasy"] = "🧙", ["Science Fiction"] = "🚀", ["Mystery"] = "🔍",
+        ["Thriller"] = "⚡", ["Romance"] = "❤️", ["Horror"] = "👻",
+        ["Historical"] = "🏛️", ["Non-Fiction"] = "📰", ["Young Adult"] = "✨",
+        ["Classic"] = "📜", ["Adventure"] = "🗺️", ["Biography"] = "👤",
+        ["Self-Help"] = "🎯", ["Children's"] = "🎨", ["General Fiction"] = "📖"
+    };
+    var genreClasses = new Dictionary<string, string>
+    {
+        ["Fantasy"] = "genre-fantasy", ["Science Fiction"] = "genre-scifi",
+        ["Mystery"] = "genre-mystery", ["Thriller"] = "genre-thriller",
+        ["Romance"] = "genre-romance", ["Horror"] = "genre-horror",
+        ["Historical"] = "genre-historical", ["Non-Fiction"] = "genre-nonfiction",
+        ["Young Adult"] = "genre-ya", ["Classic"] = "genre-classic",
+        ["Adventure"] = "genre-adventure", ["Biography"] = "genre-biography",
+        ["Self-Help"] = "genre-selfhelp", ["Children's"] = "genre-children",
+        ["General Fiction"] = "genre-general"
+    };
+
+    var recList = Model.RecommendedBooks.ToList();
+    var heroRec = recList.FirstOrDefault();
+    var secondaryRecs = recList.Skip(1).Take(3).ToList();
+    var restRecs = recList.Skip(4).ToList();
+}
+
+@* ═══════════════════════════════════════════
+   RECOMMENDATIONS HERO — THE MAIN FEATURE
+   ═══════════════════════════════════════════ *@
+<div class="rec-section">
+    <div class="rec-section-header">
+        <div class="rec-section-eyebrow">
+            <span class="rec-pulse"></span>
+            AI-Powered · Matrix Factorization
+        </div>
+        <h1 class="rec-section-title">Your Recommendations, <span class="rec-name-gradient">@firstName</span></h1>
+        <p class="rec-section-sub">Personalised picks computed just for you based on your interests.</p>
+    </div>
+
+    @if (recList.Any())
+    {
+        <div class="rec-featured-layout">
+
+            @* ── BIG HERO CARD ── *@
+            @if (heroRec != null)
+            {
+                <a href="@Url.Action("Details","Books", new { id = heroRec.BookId })" class="rec-hero-card">
+                    <div class="rec-hero-bg-wrap">
+                        <img src="@heroRec.ImageUrl" alt="" class="rec-hero-bg-img"
+                             onerror="this.src='https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=900&q=80'" />
+                        <div class="rec-hero-overlay"></div>
+                    </div>
+                    <div class="rec-hero-body">
+                        <div class="rec-hero-rank">#1 Pick</div>
+                        <img src="@heroRec.ImageUrl" alt="@heroRec.Title" class="rec-hero-cover"
+                             onerror="this.src='https://via.placeholder.com/140x210/1a2a3a/4f8ef7?text=📖'" />
+                        <div class="rec-hero-info">
+                            <span class="rec-hero-genre">@(genreIcons.GetValueOrDefault(heroRec.Genre,"📚")) @heroRec.Genre</span>
+                            <h2 class="rec-hero-title">@heroRec.Title</h2>
+                            <div class="rec-hero-author">by @heroRec.Authors</div>
+                            <div class="rec-hero-stars">
+                                @{ int fs = (int)Math.Floor(heroRec.AverageRating); }
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <span class="@(i <= fs ? "star-on" : "star-off")">★</span>
+                                }
+                                <span class="rec-hero-rating-num">@heroRec.AverageRating</span>
+                            </div>
+                            <div class="btn-rec-view">View Book →</div>
+                        </div>
+                    </div>
+                </a>
+            }
+
+            @* ── THREE SECONDARY CARDS ── *@
+            <div class="rec-secondary-col">
+                @foreach (var book in secondaryRecs)
+                {
+                    var rank = secondaryRecs.IndexOf(book) + 2;
+                    <a href="@Url.Action("Details","Books", new { id = book.BookId })" class="rec-secondary-card">
+                        <div class="rec-secondary-rank">#@rank</div>
+                        <img src="@book.ImageUrl" alt="@book.Title" class="rec-secondary-cover"
+                             onerror="this.src='https://via.placeholder.com/90x135/1a2a3a/4f8ef7?text=📖'" />
+                        <div class="rec-secondary-info">
+                            <span class="rec-secondary-genre">@(genreIcons.GetValueOrDefault(book.Genre,"📚")) @book.Genre</span>
+                            <div class="rec-secondary-title">@book.Title</div>
+                            <div class="rec-secondary-author">@book.Authors</div>
+                            <div class="rec-secondary-rating">★ @book.AverageRating</div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+
+        @* ── REST OF RECOMMENDATIONS STRIP ── *@
+        @if (restRecs.Any())
+        {
+            <div class="rec-more-header">
+                <span>More picks for you</span>
+                <div class="rec-more-line"></div>
+            </div>
+            <div class="strip-wrapper" style="margin-bottom: 0;">
+                <button class="strip-btn left" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:-600,behavior:'smooth'})">‹</button>
+                <div class="strip" style="padding-left: 4%; padding-right: 4%;">
+                    @foreach (var book in restRecs)
+                    {
+                        <a href="@Url.Action("Details","Books", new { id = book.BookId })" class="book-card">
+                            <div class="book-cover-wrap">
+                                <img src="@book.ImageUrl" alt="@book.Title" class="book-cover"
+                                     onerror="this.src='https://via.placeholder.com/160x240/1a2a3a/4f8ef7?text=📖'" loading="lazy" />
+                                <div class="book-card-overlay"><span class="rating">★ @book.AverageRating</span></div>
+                            </div>
+                            <div class="book-info">
+                                <div class="book-title">@book.Title</div>
+                                <div class="book-author">@book.Authors</div>
+                            </div>
+                        </a>
+                    }
+                </div>
+                <button class="strip-btn right" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:600,behavior:'smooth'})">›</button>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="rec-empty">
+            <div style="font-size:3rem;margin-bottom:1rem;">🤖</div>
+            <h3>Recommendations loading…</h3>
+            <p>The ML model is computing your personalised picks. Try refreshing in a moment.</p>
+        </div>
+    }
+</div>
+
+@* ── DIVIDER ── *@
+<div class="section-divider"></div>
+
+@* ── TRENDING NOW ── *@
+<div class="strip-wrapper">
+    <div class="section-header">
+        <h2 class="section-title"><span class="icon">🔥</span> Trending Now</h2>
+        <a href="@Url.Action("Browse","Books", new { sortBy = "popular" })" class="section-link">See all →</a>
+    </div>
+    <button class="strip-btn left" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:-600,behavior:'smooth'})">‹</button>
+    <div class="strip">
+        @foreach (var book in Model.TrendingBooks)
+        {
+            <a href="@Url.Action("Details","Books", new { id = book.BookId })" class="book-card">
+                <div class="book-cover-wrap">
+                    <img src="@book.ImageUrl" alt="@book.Title" class="book-cover"
+                         onerror="this.src='https://via.placeholder.com/160x240/1a2a3a/4f8ef7?text=📖'" loading="lazy" />
+                    <div class="book-card-overlay"><span class="rating">★ @book.AverageRating</span></div>
+                </div>
+                <div class="book-info">
+                    <div class="book-title">@book.Title</div>
+                    <div class="book-author">@book.Authors</div>
+                </div>
+            </a>
+        }
+    </div>
+    <button class="strip-btn right" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:600,behavior:'smooth'})">›</button>
+</div>
+
+@* ── TOP RATED ── *@
+<div class="strip-wrapper">
+    <div class="section-header">
+        <h2 class="section-title"><span class="icon">⭐</span> Top Rated</h2>
+        <a href="@Url.Action("Browse","Books", new { sortBy = "rating" })" class="section-link">See all →</a>
+    </div>
+    <button class="strip-btn left" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:-600,behavior:'smooth'})">‹</button>
+    <div class="strip">
+        @foreach (var book in Model.TopRatedBooks)
+        {
+            <a href="@Url.Action("Details","Books", new { id = book.BookId })" class="book-card">
+                <div class="book-cover-wrap">
+                    <img src="@book.ImageUrl" alt="@book.Title" class="book-cover"
+                         onerror="this.src='https://via.placeholder.com/160x240/1a2a3a/4f8ef7?text=📖'" loading="lazy" />
+                    <div class="book-card-overlay"><span class="rating">★ @book.AverageRating</span></div>
+                </div>
+                <div class="book-info">
+                    <div class="book-title">@book.Title</div>
+                    <div class="book-author">@book.Authors</div>
+                </div>
+            </a>
+        }
+    </div>
+    <button class="strip-btn right" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:600,behavior:'smooth'})">›</button>
+</div>
+
+@* ── NEW RELEASES ── *@
+<div class="strip-wrapper">
+    <div class="section-header">
+        <h2 class="section-title"><span class="icon">🌟</span> New Releases</h2>
+        <a href="@Url.Action("Browse","Books", new { sortBy = "newest" })" class="section-link">See all →</a>
+    </div>
+    <button class="strip-btn left" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:-600,behavior:'smooth'})">‹</button>
+    <div class="strip">
+        @foreach (var book in Model.NewReleases)
+        {
+            <a href="@Url.Action("Details","Books", new { id = book.BookId })" class="book-card">
+                <div class="book-cover-wrap">
+                    <img src="@book.ImageUrl" alt="@book.Title" class="book-cover"
+                         onerror="this.src='https://via.placeholder.com/160x240/1a2a3a/4f8ef7?text=📖'" loading="lazy" />
+                    <div class="book-card-overlay"><span class="rating">★ @book.AverageRating</span></div>
+                </div>
+                <div class="book-info">
+                    <div class="book-title">@book.Title</div>
+                    <div class="book-author">@book.Authors</div>
+                </div>
+            </a>
+        }
+    </div>
+    <button class="strip-btn right" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:600,behavior:'smooth'})">›</button>
+</div>
+
+@* ── GENRE SPOTLIGHTS ── *@
+@foreach (var spotlight in Model.GenreSpotlights)
+{
+    <div class="strip-wrapper">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span class="icon">@(genreIcons.GetValueOrDefault(spotlight.Key, "📚"))</span>
+                @spotlight.Key
+            </h2>
+            <a href="@Url.Action("Browse","Books", new { genre = spotlight.Key })" class="section-link">Browse @spotlight.Key →</a>
+        </div>
+        <button class="strip-btn left" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:-600,behavior:'smooth'})">‹</button>
+        <div class="strip">
+            @foreach (var book in spotlight.Value)
+            {
+                <a href="@Url.Action("Details","Books", new { id = book.BookId })" class="book-card">
+                    <div class="book-cover-wrap">
+                        <img src="@book.ImageUrl" alt="@book.Title" class="book-cover"
+                             onerror="this.src='https://via.placeholder.com/160x240/1a2a3a/4f8ef7?text=📖'" loading="lazy" />
+                        <div class="book-card-overlay"><span class="rating">★ @book.AverageRating</span></div>
+                    </div>
+                    <div class="book-info">
+                        <div class="book-title">@book.Title</div>
+                        <div class="book-author">@book.Authors</div>
+                    </div>
+                </a>
+            }
+        </div>
+        <button class="strip-btn right" onclick="this.closest('.strip-wrapper').querySelector('.strip').scrollBy({left:600,behavior:'smooth'})">›</button>
+    </div>
+}
+
+@* ── BROWSE BY GENRE CARDS ── *@
+<div class="genres-section">
+    <div class="section-header" style="padding: 0;">
+        <h2 class="section-title"><span class="icon">🏷️</span> Browse by Genre</h2>
+        <a href="@Url.Action("Browse","Books")" class="section-link">All books →</a>
+    </div>
+    <div class="genres-grid">
+        @foreach (var genre in Model.AllGenres)
+        {
+            var cssClass = genreClasses.GetValueOrDefault(genre, "genre-general");
+            var icon = genreIcons.GetValueOrDefault(genre, "📚");
+            <a href="@Url.Action("Browse","Books", new { genre = genre })" class="genre-card @cssClass">
+                <span class="genre-icon">@icon</span>
+                @genre
+            </a>
+        }
+    </div>
+</div>

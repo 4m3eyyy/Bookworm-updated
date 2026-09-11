@@ -1,0 +1,11 @@
+using Microsoft.ML.Data;
+
+namespace Bookworm.Models
+{
+    public class BookRatingPrediction
+    {
+        public float Label { get; set; }
+
+        public float Score { get; set; }
+    }
+}
